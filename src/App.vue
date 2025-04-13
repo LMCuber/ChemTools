@@ -46,6 +46,7 @@
   })
   const tooltips = ref(true);
   const gridlines = ref(true);
+  let lastRequest: number = Date.now();
 
   // template refs
   const inputBox = useTemplateRef("inputBox");
@@ -114,6 +115,7 @@
   }
 
   async function displayModel() {
+    lastRequest = Date.now();
     const url: string = chemUrl.replace("{}", compoundName.value);
     try {
       const response = await fetch(url);
@@ -209,6 +211,8 @@
     // finishing touches
     centerDisabled.value = false;
     controls.saveState();
+    // response time
+    console.log(Date.now() - lastRequest);
   }
 
   function getBondMeshes(a: Atom, b: Atom, n: number, spacing = 0.12): THREE.Mesh[] {
