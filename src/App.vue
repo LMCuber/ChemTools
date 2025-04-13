@@ -5,13 +5,20 @@
     <div id="grid">
 
       <div ref="settingsBar" id="settings" class="border">
-        <input ref="inputBox" type="text" v-model="name" @keyup.enter="displayModel">
+        <input ref="inputBox" type="text" v-model="compoundName" @keyup.enter="displayModel">
         <button :v-if="Math.random() > 0.5" @click="controls.reset()" class="settings-style" :class="{disabled: centerDisabled}">Recenter</button>
         <hr>
+
         <label class="settings-style settings-checkbox">
-          <input v-model="tooltips" class="checkbox" type="checkbox" />
+          <input type="checkbox" v-model="tooltips" class="checkbox" />
           <span>Tooltips</span>
         </label>
+        <hr>
+        <label class="settings-style settings-checkbox">
+          <input type="checkbox" v-model="gridlines" @change="toggleGridlines" class="checkbox" />
+          <span>Gridlines</span>
+        </label>
+
       </div>
 
       <canvas id="canvas" class="border" @mouseup="inputBox.focus()" @mousemove="raycastForTooltip"></canvas>
@@ -30,7 +37,7 @@
   // const chemUrl: string = "https://opsin.ch.cam.ac.uk/opsin/{}.cml";
   const PI: number = Math.PI;
   const chemUrl: string = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{}/SDF?record_type=3d";
-  const name: Ref<string> = ref("methane");
+  const compoundName: Ref<string> = ref("methane");
   const fps: Ref<string> = ref("");
   const centerDisabled: Ref<boolean> = ref(true);
   const canvas = reactive({
@@ -38,6 +45,7 @@
     height: 600
   })
   const tooltips = ref(true);
+  const gridlines = ref(true);
 
   // template refs
   const inputBox = useTemplateRef("inputBox");
@@ -48,7 +56,9 @@
   let camera: THREE.Camera;
   let renderer: THREE.WebGLRenderer;
   let pointLight: THREE.PointLight;
+  const gridHelper = new THREE.GridHelper(200, 50);
   let controls: OrbitControls;
+  //
   let lastUpdate: number = performance.now();
   let deletables: (AtomMesh | BondMesh)[] = [];
   const raycaster = new THREE.Raycaster();
@@ -90,17 +100,21 @@
 
   const atomData = {
     // radius in picometer
+    // basic
     "C": {color: 0x232323, radius: 77},
     "H": {color: 0xFFFFFF, radius: 53},
     "O": {color: "red", radius: 60},
     "N": {color: "blue", radius: 53},
-    "F": {color: "lightgreen", radius: 42},
+    // halogens
+    "F": {color: "#d7d959", radius: 71},
+    "Cl": {color: "#90EE90", radius: 99},
+    // other
     "S": {color: "yellow", radius: 100},
     "P": {color: "orange", radius: 110},
   }
 
   async function displayModel() {
-    const url: string = chemUrl.replace("{}", name.value);
+    const url: string = chemUrl.replace("{}", compoundName.value);
     try {
       const response = await fetch(url);
       if (!response.ok) {
@@ -197,7 +211,7 @@
     controls.saveState();
   }
 
-  function getBondMeshes(a: Atom, b: Atom, n: number, spacing = 0.12) {
+  function getBondMeshes(a: Atom, b: Atom, n: number, spacing = 0.12): THREE.Mesh[] {
     const start = new THREE.Vector3(a.x, a.y, a.z);
     const end = new THREE.Vector3(b.x, b.y, b.z);
     const axis = new THREE.Vector3().subVectors(end, start).normalize();
@@ -239,20 +253,20 @@
     return meshes;
   }
 
-  function getCylinderMesh(pointX: THREE.Vector3, pointY: THREE.Vector3) {
+  function getCylinderMesh(pointX: THREE.Vector3, pointY: THREE.Vector3): THREE.Mesh {
     /* 
     from: https://stackoverflow.com/questions/15316127/three-js-line-vector-to-cylinder
     */
-    var direction = new THREE.Vector3().subVectors(pointY, pointX);
-    var orientation = new THREE.Matrix4();
+    const direction = new THREE.Vector3().subVectors(pointY, pointX);
+    const orientation = new THREE.Matrix4();
     orientation.lookAt(pointX, pointY, new THREE.Object3D().up);
     orientation.multiply(new THREE.Matrix4().set(1, 0, 0, 0,
       0, 0, 1, 0,
       0, -1, 0, 0,
       0, 0, 0, 1)
     );
-    var edgeGeometry = new THREE.CylinderGeometry(0.06, 0.06, direction.length(), 16, 16);
-    var edge = new THREE.Mesh(edgeGeometry, new THREE.MeshStandardMaterial({ color: "lightgray" }));
+    const edgeGeometry = new THREE.CylinderGeometry(0.06, 0.06, direction.length(), 16, 16);
+    const edge = new THREE.Mesh(edgeGeometry, new THREE.MeshStandardMaterial({ color: "lightgray" }));
     edge.applyMatrix4(orientation);
     // position based on midpoints - there may be a better solution than this
     edge.position.x = (pointY.x + pointX.x) / 2;
@@ -261,7 +275,7 @@
     return edge;
   }
 
-  function raycastForTooltip(event) {
+  function raycastForTooltip(event: any): void {
     if (!tooltips.value) {
       return;
     }
@@ -287,6 +301,14 @@
     // set the intersected colors a different color
     for (const inter of intersects) {
       inter.object.material.color.set("pink");
+    }
+  }
+
+  function toggleGridlines(): void {
+    if (!gridlines.value) {
+      scene.remove(gridHelper);
+    } else {
+      scene.add(gridHelper)
     }
   }
 
@@ -316,7 +338,6 @@
     scene.add(plHelper);
 
     // gridlines and controls
-    const gridHelper = new THREE.GridHelper(200, 50);
     scene.add(gridHelper);
     controls = new OrbitControls(camera, renderer.domElement);
 
@@ -335,9 +356,6 @@
     pointLight.position.set(0, r * Math.sin(Date.now() * 0.001), r * Math.cos(Date.now() * 0.001),);
 
     requestAnimationFrame(animate);
-
-    // update the raycaster
-    
 
     // update the controls
     controls.update();
