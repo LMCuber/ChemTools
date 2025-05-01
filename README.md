@@ -2,7 +2,7 @@
 (In)organic compound visualiser on the web, built with Vue & THREE.js.
 
 ## Technical Information
-* ChemTools sends a request to (PubChem)[https://pubchem.ncbi.nlm.nih.gov/] & retrieves a SDF (Structural Data File).
+* ChemTools sends a request to [PubChem](https://pubchem.ncbi.nlm.nih.gov/) & retrieves a SDF (Structural Data File).
 * This file then gets parsed and converted into geometry, which in turn gets rendered by THREE.js.
 * Vue manages reactive components and data.
 
