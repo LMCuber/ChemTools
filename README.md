@@ -8,6 +8,7 @@
 
 The general response time is around 100ms for smaller molecules and under 500ms for larger compounds. Some large / unstable compounds don't inherenly support a 3D view, as the PubChem API briefly quotes:
 > Conformer generation is disallowed since too many atoms, too flexible, too many undefined stereo centers
+
 Below are a few examples of the structures generated:
 
 <img src="https://github.com/LMCuber/ChemTools/blob/main/previews/TNT.png" width="550" />
