@@ -26,10 +26,10 @@ To put simply, it generates a new output string given a starting value (an _axio
     * F -> FF
 
 When applying rules, we get:
-    * _n = 0_ : G
-    * _n = 1_ : F[+G]-G
-    * _n = 2_ : FF[+F[+G]-G]-F[+G]-G
-    * _n = 3_ : FFFF[+FF[+F[+G]-G]-F[+G]-G]-FF[+F[+G]-G]-F[+G]-G
+    * _n = 0_ : `G`
+    * _n = 1_ : `F[+G]-G`
+    * _n = 2_ : `FF[+F[+G]-G]-F[+G]-G`
+    * _n = 3_ : `FFFF[+FF[+F[+G]-G]-F[+G]-G]-FF[+F[+G]-G]-F[+G]-G`
 This output may look complicated, but try it out for yourself to see what nice pattern it produces.
 
 L-systems can be used as an alternative declarative way to describe natural patterns, including regular shapes such as the Sierpiński triangle.
