@@ -14,8 +14,8 @@ The general response time is around 100ms for smaller molecules and under 500ms 
 
 Below are a few examples of the structures generated:
 
-<img src="https://github.com/LMCuber/ChemTools/blob/main/previews/chem_egfr.png" width="600" />
-<img src="https://github.com/LMCuber/ChemTools/blob/main/previews/chem_cubane.png" width="650"/>
+<img src="https://github.com/LMCuber/ChemTools/blob/main/previews/chem_egfr.png" width="800" />
+<img src="https://github.com/LMCuber/ChemTools/blob/main/previews/chem_cubane.png" width="750"/>
 
 ## How to run
 ### Compile and Hot-Reload for Development
