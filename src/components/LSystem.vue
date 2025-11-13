@@ -23,6 +23,8 @@
           <label>Iterations: {{ iterations }}</label>
           <input v-model="iterations" type="range" min="0" max="10">
 
+          <Recenter v-if="controls" :controls="controls"></Recenter>
+          <hr>
           <button @click=generatePattern>Apply</button>
       </div>
 
@@ -37,6 +39,7 @@
   import * as THREE from "three"
   import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
   import { getCSSVar } from "../utils/commons";
+import Recenter from "./Recenter.vue";
 
   // lifecycle values
   const active: Ref<boolean> = ref(false);
@@ -60,7 +63,7 @@
   let camera: THREE.Camera;
   let renderer: THREE.WebGLRenderer;
   let pointLight: THREE.PointLight;
-  let controls: OrbitControls;
+  let controls: Ref<OrbitControls | null> = ref(null);
   
   // other
   const deletables = [];
@@ -93,7 +96,7 @@
     // scene.add(plHelper);
 
     // gridlines and controls
-    controls = new OrbitControls(camera, renderer.domElement);
+    controls.value = new OrbitControls(camera, renderer.domElement);
 
     if (active.value) {
       animate();
@@ -116,11 +119,11 @@
   })
 
   const angleRadians = computed(() => angleRef.value * (Math.PI / 180));
-  const scale = computed(() => 1 / (Math.pow(iterations.value, 2)));
+  const scale = computed(() => 2 / (Math.pow(iterations.value, 2)));
 
   function animate() {
     // update the controls
-    controls.update();
+    controls.value.update();
 
     // render the scene
     renderer.render(scene, camera);
@@ -132,7 +135,7 @@
   function generatePattern() {
     const randHex = () => {
       let hex = Math.floor(Math.random() * 0xFFFFFF).toString(16);
-      return `#${hex.padStart(6, '0')}`;
+      return `#${hex.padStart(6, "0")}`;
     }
 
     // delete the old pattern
@@ -248,18 +251,16 @@
     margin-bottom: 4px;
   }
 
+  textarea {
+    resize: vertical;
+  }
+
   input[type="text"] {
     width: 120px;
   }
 
   input[type="range"] {
-    margin-top: 4px;
-    margin-bottom: 4px;
-  }
-
-  hr {
-    margin-top: 2px;
-    margin-bottom: 2px;
+    margin-bottom: 18px;
   }
 
 </style>

@@ -5,7 +5,7 @@
       <!-- settings bar containing the buttons and checks -->
       <div ref="settingsBar" class="settings border">
           <input ref="inputBox" type="text" v-model="compoundName" @keyup.enter="displayModel">
-          <button @click="controls.reset()">Recenter</button>
+          <Recenter v-if="controls" :controls="controls"></Recenter>
           <hr>
 
           <label class="settings-label">
@@ -27,10 +27,11 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, onActivated, onBeforeUnmount, onDeactivated, onMounted, reactive, Ref, ref, useTemplateRef } from "vue"
+  import { onActivated, onBeforeUnmount, onDeactivated, onMounted, reactive, Ref, ref, useTemplateRef } from "vue"
   import * as THREE from "three"
   import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
   import { getCSSVar } from "../utils/commons";
+  import Recenter from "./Recenter.vue";
 
   const chemUrl: string = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{}/SDF?record_type=3d";
   const compoundName: Ref<string> = ref("methane");
@@ -56,7 +57,7 @@
   let renderer: THREE.WebGLRenderer;
   let pointLight: THREE.PointLight;
   const gridHelper = new THREE.GridHelper(200, 50);
-  let controls: OrbitControls;
+  let controls: Ref<OrbitControls | null> = ref(null);
   //
   let lastUpdate: number = performance.now();
   let deletables: (AtomMesh | BondMesh)[] = [];
@@ -215,7 +216,7 @@
     }
     
     // finishing touches
-    controls.saveState();
+    controls.value.saveState();
 
     // response time
     console.log(`Refresh time: ${Date.now() - lastRequest} ms`, );
@@ -351,7 +352,7 @@
 
     // gridlines and controls
     scene.add(gridHelper);
-    controls = new OrbitControls(camera, renderer.domElement);
+    controls.value = new OrbitControls(camera, renderer.domElement);
 
     // start the recursion!
     animate();
@@ -365,7 +366,7 @@
     requestAnimationFrame(animate);
 
     // update the controls
-    controls.update();
+    controls.value.update();
 
     // render the scene
     renderer.render(scene, camera);
@@ -389,18 +390,9 @@
 </script>
 
 <style scoped>
-  label {
-    width: 0%;
-  }
-
   #grid {
     display: grid;
-    grid-template-columns: var(--settings-width) 70%;
-  }
-
-  #canvas {
-    grid-column: 2 / span 1;
-    grid-row: 1 / span 2;
+    grid-template-columns: var(--settings-width) 1fr;
   }
 
 </style>

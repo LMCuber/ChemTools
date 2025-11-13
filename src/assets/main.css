@@ -8,7 +8,7 @@
   --vt-c-black-soft: #222222;
   --vt-c-black-mute: #282828;
 
-  --vt-c-indigo: #2c3e50;
+  --vt-c-indigo: #2a333d;
 
   --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
   --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
@@ -108,8 +108,8 @@ input[type="text"] {
 }
 
 .disabled {
-  background-color: rgb(156, 156, 156) !important;
-  color: rgb(64, 64, 64) !important;
+  background-color: rgb(156, 156, 156);
+  color: rgb(64, 64, 64);
 }
 
 .border {
@@ -119,6 +119,7 @@ input[type="text"] {
 .settings {
   display: flex;
   flex-direction: column;
+  background-color: var(--vt-c-indigo);
 
   button, .settings-label {
     background-color: var(--palette-secondary);
@@ -156,7 +157,7 @@ input[type="text"] {
       margin-right: 10px;
       accent-color: rgb(167, 197, 167);
   }
-  
+
   hr {
       border: none;
       background-color: white;

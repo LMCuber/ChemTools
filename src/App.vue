@@ -33,16 +33,15 @@
 <style scoped>
 
   #main {
-    width: 100vw;
-    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
+    min-height: 100vh; /* centers vertically */
   }
 
   #main-grid {
     display: grid;
-    grid-template-columns: 10% 85%;
+    grid-template-columns: var(--toolbar-width) 1fr;
   }
 
 </style>
