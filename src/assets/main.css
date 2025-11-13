@@ -50,6 +50,17 @@
   }
 }
 
+:root {
+  --palette-primary: #445c4c;
+  --palette-secondary: rgb(85, 129, 121);
+  --palette-highlight: #91a88a;
+}
+
+:root {
+  --toolbar-width: 80px;
+  --settings-width: 240px;
+}
+
 *,
 *::before,
 *::after {
@@ -99,4 +110,70 @@ input[type="text"] {
 .disabled {
   background-color: rgb(156, 156, 156) !important;
   color: rgb(64, 64, 64) !important;
+}
+
+.border {
+  border: 2px solid white;
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+
+  button, .settings-label {
+    background-color: var(--palette-secondary);
+    border: none;
+    height: 34px;
+    color: white;
+    font-size: 18px;
+    width: 100%;
+  }
+
+  button:hover {
+    background-color: white;
+    color: black;
+  }
+  
+  label {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  input[type="text"] {
+    font-size: 20px;
+    height: 30px;
+    box-shadow: none;
+    border: none;
+    margin: 10px;
+    border-radius: 4px;
+  }
+
+  input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-right: 10px;
+      accent-color: rgb(167, 197, 167);
+  }
+  
+  hr {
+      border: none;
+      background-color: white;
+      height: 1.5px;
+  }
+
+  span {
+    user-select: none;
+  }
+
+  textarea {
+    margin: 10px;
+  }
+
+  .settings-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 }
