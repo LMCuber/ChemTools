@@ -25,13 +25,20 @@ To put simply, it generates a new output string given a starting value (an _axio
     * `G` -> `F[+G]-G`
     * `F` -> `FF`
 
-* When applying rules, we get:
-    * `n = 0` : `G`
-    * `n = 1` : `F[+G]-G`
-    * `n = 2` : `FF[+F[+G]-G]-F[+G]-G`
-    * `n = 3` : `FFFF[+FF[+F[+G]-G]-F[+G]-G]-FF[+F[+G]-G]-F[+G]-G`
+When applying rules, we get:
+* `n = 0` : `G`
+* `n = 1` : `F[+G]-G`
+* `n = 2` : `FF[+F[+G]-G]-F[+G]-G`
+* `n = 3` : `FFFF[+FF[+F[+G]-G]-F[+G]-G]-FF[+F[+G]-G]-F[+G]-G`
 
-This output may look complicated, but try it out for yourself to see what nice pattern it produces.
+This output may look complicated, but try it out for yourself to see what nice pattern it produces. Take a look at the syntax:
+* `0`/`1`/`f`/`F`/`g`/`G` : move forward (to be consistent with a lot of standards)
+* `+` : rotate left
+* `-` : rotate right
+* `[` : save current location and angle
+* `]` : restore previous location and andgle
+* All other characters don't have a functional meaning except for existing.
+
 L-systems can be used as an alternative declarative way to describe natural patterns, including regular shapes such as the Sierpiński triangle.
 The main application is generating pseudo-random looking branching structures, such as plants.
 
