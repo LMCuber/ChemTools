@@ -20,16 +20,16 @@ Below are a few examples of the structures generated:
 ## L-systems
 Interactive editor for _Lindenmayer_ systems. An L-system describes a procedure where the rules of a formal language are applied onto itself in parallel.
 To put simply, it generates a new output string given a starting value (an _axiom_), and rewrite rules. Below is an example of such a system:
-* Axiom: G
+* Axiom: `G`
 * Rules:
-    * G -> F[+G]-G
-    * F -> FF
+    * `G` -> `F[+G]-G`
+    * `F` -> `FF`
 
-When applying rules, we get:
-    * _n = 0_ : `G`
-    * _n = 1_ : `F[+G]-G`
-    * _n = 2_ : `FF[+F[+G]-G]-F[+G]-G`
-    * _n = 3_ : `FFFF[+FF[+F[+G]-G]-F[+G]-G]-FF[+F[+G]-G]-F[+G]-G`
+* When applying rules, we get:
+    * `n = 0` : `G`
+    * `n = 1` : `F[+G]-G`
+    * `n = 2` : `FF[+F[+G]-G]-F[+G]-G`
+    * `n = 3` : `FFFF[+FF[+F[+G]-G]-F[+G]-G]-FF[+F[+G]-G]-F[+G]-G`
 This output may look complicated, but try it out for yourself to see what nice pattern it produces.
 
 L-systems can be used as an alternative declarative way to describe natural patterns, including regular shapes such as the Sierpiński triangle.
