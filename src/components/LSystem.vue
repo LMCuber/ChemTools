@@ -6,12 +6,12 @@
       <div ref="settingsBar" class="settings border">
           <div class="settings-row">
             <label>Axiom</label>
-            <input type="text" v-model="axiomRef" @keyup.enter="generatePattern">
+            <input type="text" spellcheck="false" v-model="axiomRef" @keyup.enter="generatePattern">
           </div>
           <hr>
 
           <label title="[/] = push/pop, +/- = rotate, 0/1 = go forward">Rules</label>
-          <textarea v-model="rulesRef" name="Text1" rows="5"></textarea>
+          <textarea v-model="rulesRef" name="Text1" rows="5" spellcheck="false"></textarea>
           <hr>
           
           <div class="settings-row">
