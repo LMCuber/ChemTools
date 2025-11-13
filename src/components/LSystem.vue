@@ -46,13 +46,13 @@ import Recenter from "./Recenter.vue";
   let frameId: number = 0;
 
   // data refs
-  const axiomRef: Ref<string> = ref("0");
+  const axiomRef: Ref<string> = ref("G");
   const angleRef: Ref<number> = ref(45);
   const canvas = reactive({
     width: 600,
     height: 600
   })
-  const rulesRef: Ref<string> = ref("1 -> 11\n0 -> 1[+0]-0");
+  const rulesRef: Ref<string> = ref("G -> F[+G]-G\nF -> FF\n");
   const iterations: Ref<number> = ref(1);
 
   // template refs
@@ -173,6 +173,8 @@ import Recenter from "./Recenter.vue";
     for (let i = 0; i < iterations.value; i++) {
       axiom = step(axiom)
     }
+
+    console.log(axiom);
 
     // init data for displaying in 3D
     let pos = new THREE.Vector3(0, 0, 0);
