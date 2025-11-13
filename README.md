@@ -30,8 +30,8 @@ To put simply, it generates a new output string given a starting value (an _axio
     * `n = 1` : `F[+G]-G`
     * `n = 2` : `FF[+F[+G]-G]-F[+G]-G`
     * `n = 3` : `FFFF[+FF[+F[+G]-G]-F[+G]-G]-FF[+F[+G]-G]-F[+G]-G`
-This output may look complicated, but try it out for yourself to see what nice pattern it produces.
 
+This output may look complicated, but try it out for yourself to see what nice pattern it produces.
 L-systems can be used as an alternative declarative way to describe natural patterns, including regular shapes such as the Sierpiński triangle.
 The main application is generating pseudo-random looking branching structures, such as plants.
 
