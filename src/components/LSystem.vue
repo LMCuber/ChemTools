@@ -49,8 +49,8 @@ import Recenter from "./Recenter.vue";
   const axiomRef: Ref<string> = ref("G");
   const angleRef: Ref<number> = ref(45);
   const canvas = reactive({
-    width: 600,
-    height: 600
+    width: getCSSVar("--canvas-width"),
+    height: getCSSVar("--canvas-height"),
   })
   const rulesRef: Ref<string> = ref("G -> F[+G]-G\nF -> FF\n");
   const iterations: Ref<number> = ref(1);
@@ -193,6 +193,8 @@ import Recenter from "./Recenter.vue";
         case "f":
         case "G":
         case "g":
+        case "h":
+        case "H":
           // observer the new position
           const movedPos = new THREE.Vector3(
             pos.x + Math.sin(angle) * scale.value,

@@ -36,8 +36,8 @@
   const chemUrl: string = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{}/SDF?record_type=3d";
   const compoundName: Ref<string> = ref("methane");
   const canvas = reactive({
-    width: 600,
-    height: 600
+    width: getCSSVar("--canvas-width"),
+    height: getCSSVar("--canvas-height"),
   })
   const tooltips = ref(true);
   const gridlines = ref(true);

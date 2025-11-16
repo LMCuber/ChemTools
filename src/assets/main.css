@@ -59,6 +59,8 @@
 :root {
   --toolbar-width: 80px;
   --settings-width: 240px;
+  --canvas-width: 700;
+  --canvas-height: 700;
 }
 
 *,
