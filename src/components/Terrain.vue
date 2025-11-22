@@ -31,6 +31,7 @@
   import Recenter from "./Recenter.vue";
   import { useThreeScene } from "../composables/useThreeScene";
   import { useNoise } from "../composables/useNoise";
+  import { EdgeVertexIndices, EdgeMasks, TriangleTable } from "../utils/marching_cubes";
 
   // composables
   const { gridlines, gridHelper, toggleGridlines, setScene, setAnimateCallback } = useThreeScene();
@@ -51,6 +52,8 @@
   let renderer: THREE.WebGLRenderer;
   let pointLight: THREE.PointLight;
   let controls: Ref<OrbitControls | null> = ref(null);
+
+  type Vec3 = [number, number, number];
   
   // other
   const deletables = [];
@@ -98,40 +101,130 @@
     renderer.render(scene, camera);
   });
 
-  function generateTerrain() {
+  function generateTerrain(): void {
+    function getSafe(x: number, y: number, z: number): number {
+      return field?.[x]?.[y]?.[z] ?? null;
+    }
+
+    function offsetToPos(x: number, y: number, z: number): Vec3 {
+      const m = 0.5;
+      return [x * m, y * m, -z * m];
+    }
+
+    function indexToOffset(i: number): Vec3 {
+      let nx: number = (i & 1) >> 0
+      let ny: number = (i & 2) >> 1
+      let nz: number = ((i & 4) >> 2)
+      return [nx, ny, nz];
+    }
+
+    function indicesToInterpolatedPos(indices: [number, number]): number[] {
+      const [x1, y1, z1] = offsetToPos(...indexToOffset(indices[0]));
+      const [x2, y2, z2] = offsetToPos(...indexToOffset(indices[1]));
+      return [
+        (x1 + x2) / 2,
+        (y1 + y2) / 2,
+        (z1 + z2) / 2,
+      ]
+    }
+
+    let field: number[][][] = [];
+
     // first delete the previous terrain
     for (const del of deletables) {
       scene.remove(del);
     }
     deletables.length = 0;
 
-    const geometry = new THREE.SphereGeometry(0.15, 64, 64);
+    const sphereGeometry = new THREE.SphereGeometry(0.05, 64, 64);
     
     reseed(Math.random());
-    const n = 8;
+    const n = 12;
     const freq = 0.12;
 
-    for (let z = -n / 2; z < n / 2; z++) {
-      for (let y = -n / 2; y < n / 2; y++) {
-        for (let x = -n / 2; x < n / 2; x++) {
+    for (let x = 0; x < n; x++) {
+      field.push([]);
+
+      for (let y = 0; y < n; y++) {
+        field[x].push([])
+
+        for (let z = 0; z < n; z++) {
           let height = (octaveNoise(x * freq, y * freq, z * freq) + 1) / 2;
 
-          if (height >= 0.5) {
-            height = 1;
-          } else {
+          if (height <= 0.5) {
             height = 0;
+          } else {
+            height = 1;
           }
 
-          const ph_material = new THREE.MeshPhongMaterial({
+          field[x][y].push(height);
+
+          const sphereMaterial = new THREE.MeshPhongMaterial({
                           color: new THREE.Color(height, height, height),
                           shininess: 50,
                           specular: 0x333333,
                       });
 
-          const mesh = new THREE.Mesh(geometry, ph_material);
-          mesh.position.set(0.3 * x, 0.3 * y, 0.3 * z, 0);
-          scene.add(mesh);
-          deletables.push(mesh);
+          const mesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+          mesh.position.set(...offsetToPos(x, y, z));
+          // scene.add(mesh);
+          // deletables.push(mesh);
+        }
+      }
+    }
+
+    console.log(field)
+
+    const meshMaterial = new THREE.MeshPhongMaterial({
+      color: new THREE.Color(0.9, 0.9, 0.9),
+      side: THREE.DoubleSide,
+      shininess: 50,
+      specular: 0x333333,
+    });
+
+    for (let x = 0; x < n; x++) {
+      for (let y = 0; y < n; y++) {
+        for (let z = 0; z < n; z++) {
+          let cubeIndex = 0;
+
+          for (let i = 0; i < 8; i++) {
+            let [nx, ny, nz]: Vec3 = indexToOffset(i);
+            if (getSafe(x + nx, y + ny, z + nz)) {
+              cubeIndex = cubeIndex | (1 << i);
+            }
+          }
+          if (cubeIndex) {
+            const edgeMask: number = EdgeMasks[cubeIndex];
+            const vertexIndicesMap: Record<number, number[]> = [...Array(12).keys()]
+              .filter(i => edgeMask & (1 << i))
+              .reduce((acc, i) => {
+                acc[i] = EdgeVertexIndices[i];
+                return acc;
+              }, {} as Record<number, number[]>);
+            const vertexPositionMap: Record<number, ReturnType<typeof indicesToInterpolatedPos>> =
+              Object.fromEntries(
+                Object.entries(vertexIndicesMap).map(([key, value]) => [
+                  key,
+                  indicesToInterpolatedPos(value)
+                ])
+              );
+            const finalVertices = TriangleTable[cubeIndex].filter(edgeIndex => edgeIndex !== -1).map(edgeIndex => vertexPositionMap[edgeIndex]);
+
+            const [offsetX, offsetY, offsetZ] = offsetToPos(x, y, z);
+            const offsetVertices = finalVertices.map(([vx, vy, vz]) => [
+              vx + offsetX,
+              vy + offsetY,
+              vz + offsetZ
+            ]);
+            const arrayVertices = new Float32Array(offsetVertices.flat());
+
+            const meshGeometry = new THREE.BufferGeometry();
+            meshGeometry.setAttribute("position", new THREE.BufferAttribute(arrayVertices, 3));
+            meshGeometry.computeVertexNormals();
+            const mesh = new THREE.Mesh(meshGeometry, meshMaterial);
+            scene.add(mesh);
+            deletables.push(mesh);
+          }
         }
       }
     }
