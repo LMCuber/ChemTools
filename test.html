@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Perlin Noise Terrain</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        #controls label {
+            display: block;
+            margin: 10px 0 5px 0;
+        }
+        #controls input[type="range"] {
+            width: 200px;
+        }
+        #controls button {
+            margin-top: 10px;
+            padding: 8px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #controls button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h3 style="margin-top: 0;">Terrain Controls</h3>
+        <label>Scale: <span id="scaleVal">30</span></label>
+        <input type="range" id="scale" min="10" max="100" value="30">
+        
+        <label>Amplitude: <span id="ampVal">15</span></label>
+        <input type="range" id="amplitude" min="5" max="50" value="15">
+        
+        <label>Octaves: <span id="octVal">4</span></label>
+        <input type="range" id="octaves" min="1" max="8" value="4">
+        
+        <button id="regenerate">Regenerate</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        // Perlin Noise Implementation
+        class PerlinNoise {
+            constructor() {
+                this.p = [];
+                for (let i = 0; i < 256; i++) {
+                    this.p[i] = Math.floor(Math.random() * 256);
+                }
+                this.p = this.p.concat(this.p);
+            }
+
+            fade(t) {
+                return t * t * t * (t * (t * 6 - 15) + 10);
+            }
+
+            lerp(t, a, b) {
+                return a + t * (b - a);
+            }
+
+            grad(hash, x, y, z) {
+                const h = hash & 15;
+                const u = h < 8 ? x : y;
+                const v = h < 4 ? y : h === 12 || h === 14 ? x : z;
+                return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
+            }
+
+            noise(x, y, z) {
+                const X = Math.floor(x) & 255;
+                const Y = Math.floor(y) & 255;
+                const Z = Math.floor(z) & 255;
+
+                x -= Math.floor(x);
+                y -= Math.floor(y);
+                z -= Math.floor(z);
+
+                const u = this.fade(x);
+                const v = this.fade(y);
+                const w = this.fade(z);
+
+                const A = this.p[X] + Y;
+                const AA = this.p[A] + Z;
+                const AB = this.p[A + 1] + Z;
+                const B = this.p[X + 1] + Y;
+                const BA = this.p[B] + Z;
+                const BB = this.p[B + 1] + Z;
+
+                return this.lerp(w,
+                    this.lerp(v,
+                        this.lerp(u, this.grad(this.p[AA], x, y, z),
+                            this.grad(this.p[BA], x - 1, y, z)),
+                        this.lerp(u, this.grad(this.p[AB], x, y - 1, z),
+                            this.grad(this.p[BB], x - 1, y - 1, z))),
+                    this.lerp(v,
+                        this.lerp(u, this.grad(this.p[AA + 1], x, y, z - 1),
+                            this.grad(this.p[BA + 1], x - 1, y, z - 1)),
+                        this.lerp(u, this.grad(this.p[AB + 1], x, y - 1, z - 1),
+                            this.grad(this.p[BB + 1], x - 1, y - 1, z - 1)))
+                );
+            }
+
+            octaveNoise(x, y, z, octaves, persistence) {
+                let total = 0;
+                let frequency = 1;
+                let amplitude = 1;
+                let maxValue = 0;
+
+                for (let i = 0; i < octaves; i++) {
+                    total += this.noise(x * frequency, y * frequency, z * frequency) * amplitude;
+                    maxValue += amplitude;
+                    amplitude *= persistence;
+                    frequency *= 2;
+                }
+
+                return total / maxValue;
+            }
+        }
+
+        // Three.js Setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87ceeb);
+        scene.fog = new THREE.Fog(0x87ceeb, 50, 200);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 40, 60);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(50, 50, 50);
+        scene.add(directionalLight);
+
+        // Terrain
+        let terrain;
+        let perlin = new PerlinNoise();
+
+        function createTerrain(scale, amplitude, octaves) {
+            if (terrain) scene.remove(terrain);
+
+            const resolution = 100;
+            const geometry = new THREE.PlaneGeometry(100, 100, resolution - 1, resolution - 1);
+            
+            const vertices = geometry.attributes.position.array;
+            const colors = [];
+
+            for (let i = 0; i < vertices.length; i += 3) {
+                const x = vertices[i];
+                const y = vertices[i + 1];
+                
+                const noise = perlin.octaveNoise(x / scale, y / scale, 0, octaves, 0.5);
+                const height = noise * amplitude;
+                vertices[i + 2] = height;
+
+                // Color based on height
+                const color = new THREE.Color();
+                if (height < 2) {
+                    color.setHex(0x8B7355); // Sandy
+                } else if (height < 8) {
+                    color.setHex(0x228B22); // Green
+                } else if (height < 12) {
+                    color.setHex(0x556B2F); // Dark green
+                } else {
+                    color.setHex(0xFFFFFF); // Snow
+                }
+                colors.push(color.r, color.g, color.b);
+            }
+
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            geometry.computeVertexNormals();
+
+            const material = new THREE.MeshPhongMaterial({
+                vertexColors: true,
+                flatShading: true,
+                shininess: 10
+            });
+
+            terrain = new THREE.Mesh(geometry, material);
+            terrain.rotation.x = -Math.PI / 2;
+            scene.add(terrain);
+        }
+
+        // Controls
+        const scaleInput = document.getElementById('scale');
+        const amplitudeInput = document.getElementById('amplitude');
+        const octavesInput = document.getElementById('octaves');
+        const regenerateBtn = document.getElementById('regenerate');
+
+        scaleInput.oninput = (e) => {
+            document.getElementById('scaleVal').textContent = e.target.value;
+            createTerrain(+scaleInput.value, +amplitudeInput.value, +octavesInput.value);
+        };
+
+        amplitudeInput.oninput = (e) => {
+            document.getElementById('ampVal').textContent = e.target.value;
+            createTerrain(+scaleInput.value, +amplitudeInput.value, +octavesInput.value);
+        };
+
+        octavesInput.oninput = (e) => {
+            document.getElementById('octVal').textContent = e.target.value;
+            createTerrain(+scaleInput.value, +amplitudeInput.value, +octavesInput.value);
+        };
+
+        regenerateBtn.onclick = () => {
+            perlin = new PerlinNoise();
+            createTerrain(+scaleInput.value, +amplitudeInput.value, +octavesInput.value);
+        };
+
+        // Initial terrain
+        createTerrain(30, 15, 4);
+
+        // Mouse controls
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let cameraAngle = { theta: 0, phi: Math.PI / 4 };
+        let cameraDistance = 80;
+
+        function updateCameraPosition() {
+            camera.position.x = cameraDistance * Math.sin(cameraAngle.theta) * Math.cos(cameraAngle.phi);
+            camera.position.y = cameraDistance * Math.sin(cameraAngle.phi);
+            camera.position.z = cameraDistance * Math.cos(cameraAngle.theta) * Math.cos(cameraAngle.phi);
+            camera.lookAt(0, 0, 0);
+        }
+
+        renderer.domElement.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        renderer.domElement.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaX = e.clientX - previousMousePosition.x;
+                const deltaY = e.clientY - previousMousePosition.y;
+
+                cameraAngle.theta += deltaX * 0.01;
+                cameraAngle.phi += deltaY * 0.01;
+
+                // Limit vertical angle
+                cameraAngle.phi = Math.max(0.1, Math.min(Math.PI / 2 - 0.1, cameraAngle.phi));
+
+                updateCameraPosition();
+
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            }
+        });
+
+        renderer.domElement.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        renderer.domElement.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            cameraDistance += e.deltaY * 0.05;
+            cameraDistance = Math.max(20, Math.min(150, cameraDistance));
+            updateCameraPosition();
+        });
+
+        updateCameraPosition();
+
+        // Animation
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

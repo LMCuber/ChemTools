@@ -24,8 +24,9 @@
   import ChemTools from "./components/ChemTools.vue";
   import LSystem from "./components/LSystem.vue";
   import Sidebar from "./components/Sidebar.vue";
+  import Terrain from "./components/Terrain.vue";
 
-  const widgets: Array<Component> = [ChemTools, LSystem];
+  const widgets: Array<Component> = [ChemTools, LSystem, Terrain];
   const currentWidget: Ref<number> = ref(0);
 
 </script>
@@ -36,7 +37,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh; /* centers vertically */
+    min-height: 100vh;
   }
 
   #main-grid {
