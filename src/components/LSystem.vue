@@ -185,6 +185,8 @@ import Recenter from "./Recenter.vue";
       return;
     }
 
+    const material = new THREE.LineBasicMaterial( { color: "white"} );
+
     for (const symbol of axiom) {
       switch (symbol) {
         case "0":
@@ -203,7 +205,6 @@ import Recenter from "./Recenter.vue";
 
           // material loading
           // const material = new THREE.LineBasicMaterial( { color: randHex()} );
-          const material = new THREE.LineBasicMaterial( { color: "white"} );
           const geometry = new THREE.BufferGeometry().setFromPoints( [pos, movedPos] );
           const line = new THREE.Line( geometry, material );
           scene.add( line );
