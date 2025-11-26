@@ -82,8 +82,8 @@
     const ambient = new THREE.AmbientLight(0xFFFFFF);
     scene.add(ambient);
     pointLight = new THREE.PointLight(0xFFFFFF);
-    pointLight.position.set(0, 5, 0);
-    pointLight.intensity = 30;
+    pointLight.position.set(0, 12, 0);
+    pointLight.intensity = 300;
     scene.add(pointLight);
     // const plHelper = new THREE.PointLightHelper(pointLight);
     // scene.add(plHelper);
@@ -107,8 +107,11 @@
     }
 
     function offsetToPos(x: number, y: number, z: number): Vec3 {
-      const m = 0.5;
-      return [x * m, y * m, -z * m];
+      return [x * tileWidth, y * tileWidth, -z * tileWidth];
+    }
+
+    function centerPos(v: Vec3): Vec3 {
+      return [v[0] - ((numTiles - 1) * tileWidth / 2), v[1] - ((terrainHeight - 1) * tileWidth / 2), v[2] + ((numTiles - 1) * tileWidth / 2)]
     }
 
     function indexToOffset(i: number): Vec3 {
@@ -118,7 +121,7 @@
       return [nx, ny, nz];
     }
 
-    function indicesToInterpolatedPos(indices: [number, number]): number[] {
+    function indicesToInterpolatedPos(x: number, y: number, z: number, indices: [number, number]): number[] {
       const [x1, y1, z1] = offsetToPos(...indexToOffset(indices[0]));
       const [x2, y2, z2] = offsetToPos(...indexToOffset(indices[1]));
       return [
@@ -128,68 +131,97 @@
       ]
     }
 
-    let field: number[][][] = [];
+    function hexToRGB(hex: string): [number, number, number] {
+        if (hex.startsWith("#")) {
+          hex = hex.slice(1);
+        }
+        const r = parseInt(hex.slice(0, 2), 16) / 255;
+        const g = parseInt(hex.slice(2, 4), 16) / 255;
+        const b = parseInt(hex.slice(4, 6), 16) / 255;
+        return [r, g, b];
+    }
 
-    // first delete the previous terrain
     for (const del of deletables) {
       scene.remove(del);
     }
     deletables.length = 0;
 
-    const sphereGeometry = new THREE.SphereGeometry(0.05, 64, 64);
+    let field: number[][][] = [];
     
     reseed(Math.random());
-    const n = 12;
-    const freq = 0.12;
+    const numTiles = 200;
+    const terrainHeight = 50;
+    const tileWidth = 0.25;
+    const freq = 0.015;
 
-    for (let x = 0; x < n; x++) {
+    const sphereGeometry = new THREE.SphereGeometry(0.05, 64, 64);
+    for (let x = 0; x < numTiles; x++) {
       field.push([]);
 
-      for (let y = 0; y < n; y++) {
+      for (let y = 0; y < terrainHeight; y++) {
         field[x].push([])
 
-        for (let z = 0; z < n; z++) {
-          let height = (octaveNoise(x * freq, y * freq, z * freq) + 1) / 2;
-
-          if (height <= 0.5) {
-            height = 0;
+        for (let z = 0; z < numTiles; z++) {
+          let height = (octaveNoise(x * freq, 0, z * freq, 3) + 1) / 2;
+          if (y / terrainHeight <= height) {
+            height = 1
           } else {
-            height = 1;
+            height = 0;
           }
 
           field[x][y].push(height);
 
+          if (height === 0) {
+            continue;
+          }
+
           const sphereMaterial = new THREE.MeshPhongMaterial({
-                          color: new THREE.Color(height, height, height),
-                          shininess: 50,
-                          specular: 0x333333,
-                      });
+            color: new THREE.Color(height, height, height),
+            shininess: 50,
+            specular: 0x333333,
+          });
 
           const mesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
-          mesh.position.set(...offsetToPos(x, y, z));
+          mesh.position.set(...centerPos(offsetToPos(x, y, z)));
           // scene.add(mesh);
           // deletables.push(mesh);
         }
       }
     }
 
-    console.log(field)
+    let totalVertices = []
+    let colors = [];
 
-    const meshMaterial = new THREE.MeshPhongMaterial({
-      color: new THREE.Color(0.9, 0.9, 0.9),
-      side: THREE.DoubleSide,
-      shininess: 50,
-      specular: 0x333333,
-    });
+    // const terrainColors: Map<number, string> = new Map([
+    //   [0.28,  "#1F244B"],
+    //   [0.4,   "#d1a67e"],
+    //   [0.45,  "#f6e79c"],
+    //   [0.5,  "#b6cf8e"],
+    //   [0.6,  "#60ae7b"],
+    //   [0.75, "#3c6b64"],
+    //   [1,    "#654053"],
+    // ])
 
-    for (let x = 0; x < n; x++) {
-      for (let y = 0; y < n; y++) {
-        for (let z = 0; z < n; z++) {
+    const terrainColors: Map<number, string> = new Map([
+      [0.3,  "#4b726e"],
+      [0.35,   "#8caba1"],
+      [0.4,  "#d2c9a5"],
+      [0.45,  "#d1b187"],
+      [0.5, "#ba9158"],
+      [0.55, "#b3a555"],
+      [0.7, "#77743b"],
+      [0.75, "#4d4539"],
+      [1, "#ab9b8e"],
+    ])
+
+    for (let x = 0; x < numTiles; x++) {
+      for (let y = 0; y < terrainHeight; y++) {
+        for (let z = 0; z < numTiles; z++) {
           let cubeIndex = 0;
 
           for (let i = 0; i < 8; i++) {
             let [nx, ny, nz]: Vec3 = indexToOffset(i);
-            if (getSafe(x + nx, y + ny, z + nz)) {
+            if (getSafe(x + nx, y + ny, z + nz) >= 0.5) {
               cubeIndex = cubeIndex | (1 << i);
             }
           }
@@ -205,29 +237,50 @@
               Object.fromEntries(
                 Object.entries(vertexIndicesMap).map(([key, value]) => [
                   key,
-                  indicesToInterpolatedPos(value)
+                  indicesToInterpolatedPos(x, y, z, value)
                 ])
               );
             const finalVertices = TriangleTable[cubeIndex].filter(edgeIndex => edgeIndex !== -1).map(edgeIndex => vertexPositionMap[edgeIndex]);
-
+      
             const [offsetX, offsetY, offsetZ] = offsetToPos(x, y, z);
             const offsetVertices = finalVertices.map(([vx, vy, vz]) => [
               vx + offsetX,
               vy + offsetY,
               vz + offsetZ
             ]);
-            const arrayVertices = new Float32Array(offsetVertices.flat());
+            totalVertices.push(...offsetVertices);
 
-            const meshGeometry = new THREE.BufferGeometry();
-            meshGeometry.setAttribute("position", new THREE.BufferAttribute(arrayVertices, 3));
-            meshGeometry.computeVertexNormals();
-            const mesh = new THREE.Mesh(meshGeometry, meshMaterial);
-            scene.add(mesh);
-            deletables.push(mesh);
+            const height = (octaveNoise(x * freq, 0, z * freq, 3) + 1) / 2;
+            for (let i = 0; i < offsetVertices.length; i++) {
+              let color = terrainColors["1"];
+              for (const [h, c] of terrainColors.entries()) {
+                if (height <= h) {
+                  color = c;
+                  break;
+                }
+              }
+              colors.push(color);
+            }
           }
         }
       }
     }
+
+    const meshMaterial = new THREE.MeshPhongMaterial({
+      vertexColors: true,
+      side: THREE.DoubleSide,
+      shininess: 50,
+      specular: 0x333333,
+    });
+    const arrayVertices = new Float32Array(totalVertices.flat());
+    const meshGeometry = new THREE.BufferGeometry();
+    meshGeometry.setAttribute("position", new THREE.BufferAttribute(arrayVertices, 3));
+    meshGeometry.setAttribute("color", new THREE.BufferAttribute(new Float32Array(colors.map(c => hexToRGB(c)).flat()), 3))
+    meshGeometry.computeVertexNormals();
+    const mesh = new THREE.Mesh(meshGeometry, meshMaterial);
+    mesh.position.set(...centerPos([0, 0, 0]))
+    scene.add(mesh);
+    deletables.push(mesh);
   }
 
 </script>
