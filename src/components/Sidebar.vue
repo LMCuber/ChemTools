@@ -3,6 +3,8 @@
         <button @click="changeCurrentWidget(0)" :class="{ 'selected': props.currentWidget === 0 }" title="Chemical Compound Viewer">⚛</button>
         <hr>
         <button @click="changeCurrentWidget(1)" :class="{ 'selected': props.currentWidget === 1 }" title="L-System Visualiser">✾</button>
+        <hr>
+        <button @click="changeCurrentWidget(2)" :class="{ 'selected': props.currentWidget === 2 }" title="Terrain">※</button>
     </div>
 </template>
 

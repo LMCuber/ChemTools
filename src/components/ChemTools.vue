@@ -339,6 +339,8 @@
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(canvas.width, canvas.height);
     renderer.setClearColor(getCSSVar("--palette-primary"), 1);
+    
+    camera.position.setZ(4);
 
     // lighting
     const ambient = new THREE.AmbientLight(0xFFFFFF);
@@ -347,23 +349,19 @@
     pointLight.position.set(0, 0, 0);
     pointLight.intensity = 30;
     scene.add(pointLight);
-    const plHelper = new THREE.PointLightHelper(pointLight);
-    scene.add(plHelper);
 
     // gridlines and controls
-    scene.add(gridHelper);
     controls.value = new OrbitControls(camera, renderer.domElement);
-
-    // start the recursion!
-    animate();
+    scene.add(gridHelper);
   })
 
   function animate() {
     // goofy lighting
     const r: number = 3;
-    pointLight.position.set(0, r * Math.sin(Date.now() * 0.001), r * Math.cos(Date.now() * 0.001),);
+    const m: number = 0.0004;
+    pointLight.position.set(0, r * Math.sin(Date.now() * m), r * Math.cos(Date.now() * m),);
 
-    requestAnimationFrame(animate);
+    frameId = requestAnimationFrame(animate);
 
     // update the controls
     controls.value.update();

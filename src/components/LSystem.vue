@@ -39,7 +39,7 @@
   import * as THREE from "three"
   import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
   import { getCSSVar } from "../utils/commons";
-import Recenter from "./Recenter.vue";
+  import Recenter from "./Recenter.vue";
 
   // lifecycle values
   const active: Ref<boolean> = ref(false);
@@ -66,7 +66,7 @@ import Recenter from "./Recenter.vue";
   let controls: Ref<OrbitControls | null> = ref(null);
   
   // other
-  const deletables = [];
+  const deletables: THREE.Line[] = [];
   
   onMounted(() => {
     // template ref
@@ -97,10 +97,6 @@ import Recenter from "./Recenter.vue";
 
     // gridlines and controls
     controls.value = new OrbitControls(camera, renderer.domElement);
-
-    if (active.value) {
-      animate();
-    }
   })
 
   onActivated(() => {
@@ -133,11 +129,6 @@ import Recenter from "./Recenter.vue";
   }
 
   function generatePattern() {
-    const randHex = () => {
-      let hex = Math.floor(Math.random() * 0xFFFFFF).toString(16);
-      return `#${hex.padStart(6, "0")}`;
-    }
-
     // delete the old pattern
     for (const del of deletables) {
       scene.remove(del);
@@ -204,7 +195,7 @@ import Recenter from "./Recenter.vue";
           )
 
           // material loading
-          // const material = new THREE.LineBasicMaterial( { color: randHex()} );
+          const material = new THREE.LineBasicMaterial( { color: "white"} );
           const geometry = new THREE.BufferGeometry().setFromPoints( [pos, movedPos] );
           const line = new THREE.Line( geometry, material );
           scene.add( line );
