@@ -51,6 +51,15 @@ The original application was generating pseudo-random looking branching structur
 
 > Warning: the visualiser may lag when using large iterations, since the number of geometry in the scene is exponential in relation to it.
 
+## Marching Cubes Terrain
+Terrain generator using `simplex-noise` and rendering the terrain using the [marching cubes](https://en.wikipedia.org/wiki/Marching_cubes) algorithm.
+The terrain currently only has one color scheme and height thresholds for the colors, but an interactive editor will come soon.
+
+> Note: the terrain generation is synchronous so it may stall the webapp for a few seconds. It also does not reuse vertex data per quad, so the performance is minimal.
+
+### Example output
+<img src="https://github.com/LMCuber/ChemTools/blob/main/previews/march.png" width="700" />
+
 ## How to run
 ### Compile and Hot-Reload for Development
 
